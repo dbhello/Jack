@@ -4,53 +4,50 @@ from datetime import date
 from django.utils import timezone
 
 class MyUser(models.Model):
-	user = models.OneToOneField(User)
-	nickname = models.CharField(max_length = 16)
-	permission = models.IntegerField()
+    user = models.OneToOneField(User,primary_key = True)
+    nickname = models.CharField(max_length = 16)
+    phone = models.CharField(max_length = 11)
+    address = models.CharField(max_length = 300)
+    permission = models.IntegerField()
 
-	def __unicode__(self):
-		return self.user.username
+    def __unicode__(self):
+        return self.user.username
 
 class Book(models.Model):
-	name = models.CharField(max_length = 128)
-	price = models.FloatField()
-	author = models.CharField(max_length = 128)
-	pubDate = models.DateField()
-	typ = models.CharField(max_length = 128)
-
-	class META:
-		ordering = ['name']
-
-	def __unicode__(self):
-		return self.name
-
-class BookT(models.Model):
-    book=models.ForeignKey(Book)
+    isbn = models.CharField(max_length = 200,primary_key = True)
+    name = models.CharField(max_length = 128)
+    price = models.FloatField()
+    author = models.CharField(max_length = 128)
+    pubDate = models.DateField()
+    typ = models.CharField(max_length = 128)
     avail = models.BooleanField(default=True)
     desc = models.CharField(max_length=1000)
-    isbn = models.CharField(max_length=200)
     borrowPeriod= models.DurationField()
     publisher = models.CharField(max_length=128, blank=True)
-    rate = models.IntegerField(null=True, blank=True)
+
+    class META:
+        ordering = ['name']
+
     def __unicode__(self):
-       return self.book.name
+        return self.name
+
 
 class Img(models.Model):
-	name = models.CharField(max_length = 128)
-	desc = models.TextField()
-	img = models.ImageField(upload_to = 'image')
-	book = models.ForeignKey(Book)
-    
-	class META:
-		ordering = ['name']
-
-	def __unicode__(self):
-		return self.name
+    name = models.CharField(max_length = 128)
+    desc = models.TextField()
+    img = models.ImageField(upload_to = 'image')
+    book = models.ForeignKey(Book)
+    class META:
+        ordering = ['name']
+    def __unicode__(self):
+        return self.name
 
 class Reservation(models.Model):
-    book=models.ForeignKey(Book)
-    user=models.ForeignKey(MyUser)
-    resDate=models.DateField()
+    book = models.ForeignKey(Book)
+    user = models.ForeignKey(MyUser)
+    resDate = models.DateField()
+    dueDate = models.DateField()
+    status = models.CharField(max_length=40)
     def __unicode__(self):
         return self.book.name
 
