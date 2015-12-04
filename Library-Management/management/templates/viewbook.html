@@ -56,7 +56,7 @@
 						{% for book in book_list %}
 						<tr>
 							<td>{{ forloop.counter }}</td>
-							<td><a href="/viewbook/detail/?id={{book.id}}">{{ book.name }}</a></td>
+							<td><a href="/viewbook/detail/?isbn={{book.isbn}}">{{ book.name }}</a></td>
 							<td>{{ book.author }}</td>
 							<td>{{ book.pubDate|date:"Y-m-d" }}</td>
 							<td>{{ book.price|floatformat:2 }}</td>
