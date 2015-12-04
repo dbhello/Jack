@@ -21,7 +21,7 @@ def get_type_list():
 def index(req):
 	username = req.session.get('username', '')
 	if username:
-		user = MyUser.objects.get(user__username=username)
+		user = Student.objects.get(user__username=username)
 	else:
 		user = ''
 	content = {'active_menu': 'homepage', 'user': user}
@@ -45,7 +45,7 @@ def signup(req):
 			else:
 				newuser = User.objects.create_user(username=username, password=passwd, email=post.get('email', ''))
 				newuser.save()
-				new_myuser = MyUser(user=newuser, nickname=post.get('nickname'), permission=1)
+				new_myuser = Student(user=newuser, nickname=post.get('nickname'), permission=1)
 				new_myuser.save()
 				status = 'success'
 				#login after signup
@@ -87,7 +87,7 @@ def logout(req):
 def setpasswd(req):
 	username = req.session.get('username', '')
 	if username != '':
-		user = MyUser.objects.get(user__username=username)
+		user = Student.objects.get(user__username=username)
 	else:
 		return HttpResponseRedirect('/login/')
 	status = ''
@@ -109,7 +109,7 @@ def setpasswd(req):
 def addbook(req):
 	username = req.session.get('username', '')
 	if username != '':
-		user = MyUser.objects.get(user__username=username)
+		user = Librarian.objects.get(user__username=username)
 	else:
 		return HttpResponseRedirect('/login/')
 	if user.permission < 2:
@@ -135,7 +135,7 @@ def addbook(req):
 def viewbook(req):
 	username = req.session.get('username', '')
 	if username != '':
-		user = MyUser.objects.get(user__username=username)
+		user = Student.objects.get(user__username=username)
 	else:
 		user = ''
 	type_list = get_type_list()
@@ -181,7 +181,7 @@ def frate(x):
 def detail(req):
 	username = req.session.get('username','')
 	if username != '':
-		user = MyUser.objects.get(user__username=username)
+		user = Student.objects.get(user__username=username)
 	else:
 		user = ''
 	isbn = req.GET.get('isbn','')
@@ -218,7 +218,7 @@ def detail(req):
 def myaccount(req):
     username = req.session.get('username', '')
     if username != '':
-        user = MyUser.objects.get(user__username=username)
+        user = Student.objects.get(user__username=username)
     else:
         user = ''
     borrow_num = len(BorrowInfo.objects.filter(user=user,ReturnDate=None))
@@ -230,22 +230,22 @@ def myaccount(req):
 def viewmember(req):
     username = req.session.get('username', '')
     if username != '':
-        user = MyUser.objects.get(user__username=username)
+        user = Librarian.objects.get(user__username=username)
     else:
         user = ''
-    member_list = MyUser.objects.all()
+    member_list = Librarian.objects.all()
     
     if req.POST:
         post = req.POST
         keywords = post.get('keywords','')
-        member_list = MyUser.objects.filter(user__username__contains=keywords)
+        member_list = Librarian.objects.filter(user__username__contains=keywords)
     content = {'user': user, 'active_menu': 'viewmember', 'member_list': member_list}
     return render_to_response('viewmember.html', content, context_instance=RequestContext(req))
 
 def midifybaseinfo(req):
     username = req.session.get('username', '')
     if username != '':
-        user = MyUser.objects.get(user__username=username)
+        user = Student.objects.get(user__username=username)
     else:
         user = ''
     status = ''
@@ -266,7 +266,7 @@ def midifybaseinfo(req):
 def reservation(req):
     username = req.session.get('username', '')
     if username != '':
-        user = MyUser.objects.get(user__username=username)
+        user = Student.objects.get(user__username=username)
     else:
         user = ''
     reservation_info = Reservation.objects.filter(user=user)
@@ -277,7 +277,7 @@ def reservation(req):
 def borrow(req):
     username = req.session.get('username', '')
     if username != '':
-        user = MyUser.objects.get(user__username=username)
+        user = Student.objects.get(user__username=username)
     else:
         user = ''
     borrow_info = BorrowInfo.objects.filter(user=user,ReturnDate=None)
@@ -302,7 +302,7 @@ def borrow(req):
 def borrowhistory(req):
     username = req.session.get('username', '')
     if username != '':
-        user = MyUser.objects.get(user__username=username)
+        user = Student.objects.get(user__username=username)
     else:
         user = ''
     borrow_info = BorrowInfo.objects.filter(user=user)
