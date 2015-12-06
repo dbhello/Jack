@@ -11,6 +11,8 @@ class Student(models.Model):
     phone = models.CharField(max_length = 11)
     address = models.CharField(max_length = 300)
     major = models.CharField(max_length=50)
+    education = models.CharField(max_length=30)
+    politics = models.CharField(max_length = 30)
     academy = models.CharField(max_length = 50)
     permission = models.IntegerField()
 
@@ -34,10 +36,14 @@ class Publisher(models.Model):
     province = models.CharField(max_length=30)
     country = models.CharField(max_length=50)
     website = models.URLField()
+    def __unicode__(self):
+        return self.name
 
 class Author(models.Model):
     name = models.CharField(max_length=100)
     email = models.EmailField()
+    def __unicode__(self):
+        return self.name
 
 class Book(models.Model):
     isbn = models.CharField(max_length = 200,primary_key = True)
@@ -49,6 +55,7 @@ class Book(models.Model):
     typ = models.CharField(max_length = 128)
     desc = models.CharField(max_length=1000)
     copies_num = models.IntegerField()
+    borrowed_num = models.IntegerField()
     publisher = models.ForeignKey(Publisher)
 
     class META:
@@ -59,11 +66,18 @@ class Book(models.Model):
 
 class BookCopy(models.Model):
     book = models.ForeignKey(Book)
+    copyindex = models.IntegerField()
     barcode = models.CharField(max_length=30)
-    STATUS_CHOICE = (('read',u'阅览'),('borrowed',u'已借出'),('available',u'外借本'))
-    LOC_CHOICE = (('east',u'东校区流通'),('north',u'北校区流通'),('south',u'南校区流通'),('special',u'特藏部'))
+    STATUS_CHOICE = (('borrowed',u'已借出'),('available',u'外借本'))
+    LOC_CHOICE = (('east',u'东校区流通'),('north',u'北校区流通'),('south',u'南校区流通'))
     status = models.CharField(max_length=10,choices=STATUS_CHOICE,default='available')
     collection_loc = models.CharField(max_length=10,choices=LOC_CHOICE,default='east')
+
+    class META:
+        ordering = ['copyindex']
+
+    def __unicode__(self):
+        return u'%s %s' % (self.copyindex,self.book.name)
 
 class Notification(models.Model):
     librarian = models.ForeignKey(Librarian)
@@ -86,20 +100,23 @@ class Img(models.Model):
         return self.name
 
 class Reservation(models.Model):
-    book = models.ForeignKey(BookCopy)
+    bookcopy = models.ForeignKey(BookCopy)
     user = models.ForeignKey(Student)
     resDate = models.DateField()
+    dueDate = models.DateField()
     status = models.CharField(max_length=40)
+    LOC_CHOICE = ((u'东校区流通',u'东校区流通'),(u'北校区流通',u'北校区流通'),(u'南校区流通',u'南校区流通'))
+    loc = models.CharField(max_length=30,choices=LOC_CHOICE,default='east')
     def __unicode__(self):
-        return self.book.name
+        return self.bookcopy.book.name
 
 class BorrowInfo(models.Model):
-    book=models.ForeignKey(BookCopy)
+    bookcopy=models.ForeignKey(BookCopy)
     user=models.ForeignKey(Student)
     BorrowDate = models.DateField()
     ReturnDate = models.DateField(null=True,blank=True)
     def __unicode__(self):
-        return self.book.name
+        return self.bookcopy.book.name
 
 class BookEval(models.Model):
     book=models.ForeignKey(Book)

@@ -1,3 +1,4 @@
+#coding:utf8
 from django.shortcuts import render, render_to_response
 from django.template import Context, RequestContext
 from django.http import HttpResponse, HttpResponseRedirect
@@ -8,6 +9,8 @@ from django.contrib import auth
 from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
 from models import *
 
+
+borrowPeriod = datetime.timedelta(days=30)
 
 def get_type_list():
 	book_list = Book.objects.all()
@@ -154,27 +157,137 @@ def viewbook(req):
 		book_lst = Book.objects.filter(name__contains=keywords)
 		book_type = 'all'
 
+	img_lst = []
+	for book in book_lst:
+		img = Img.objects.filter(book=book)
+		img_lst.append(img[0])
+
 	paginator = Paginator(book_lst, 5)
+	img_paginator = Paginator(img_lst, 5)
 	page = req.GET.get('page')
 	try:
 		book_list = paginator.page(page)
+		img_list = img_paginator.page(page)
 	except PageNotAnInteger:
 		book_list = paginator.page(1)
+		img_list = img_paginator.page(1)
 	except EmptyPage:
 		book_list = paginator.page(paginator.num_pages)
+		img_list = img_paginator.page(img_paginator.num_pages)
 
-	content = {'user': user, 'active_menu': 'viewbook', 'type_list': type_list, 'book_type': book_type, 'book_list': book_list}
+	book_img_zip = zip(book_list,img_list)
+	content = {'user': user, 'active_menu': 'viewbook', 'type_list': type_list, 'book_type': book_type, 'book_img_zip': book_img_zip}
 	return render_to_response('viewbook.html', content, context_instance=RequestContext(req))
 
+def viewcopies(req):
+	username = req.session.get('username', '')
+	if username != '':
+		user = Student.objects.get(user__username=username)
+	else:
+		user = ''
+	id = req.GET.get('id','')
+	if id == '':
+		isbn = req.GET.get('isbn','')
+		if isbn == '':
+			return HttpResponseRedirect('/viewbook/')
+		try:
+			book = Book.objects.get(isbn=isbn)
+		except:
+			return HttpResponseRedirect('/viewbook/')
+	else:
+		try:
+			bookcopy = BookCopy.objects.get(id=id)
+			book = Book.objects.get(isbn=bookcopy.book.isbn)
+			if bookcopy.status == 'available':
+				bookcopy.status = 'borrowed'
+				borrowinfo = BorrowInfo(bookcopy=bookcopy,user=user,BorrowDate=datetime.date.today())
+				borrowinfo.save()
+				book.borrowed_num += 1
+				book.save()
+			elif bookcopy.status == 'borrowed':
+				borrowinfo = BorrowInfo.objects.get(bookcopy=bookcopy,user=user,ReturnDate=None)
+				borrowinfo.ReturnDate = datetime.date.today()
+				borrowinfo.save()
+				bookcopy.status = 'available'
+				bookcopy.save()
+				book.borrowed_num -= 1
+				book.save()
+		except:
+			return HttpResponseRedirect('/viewbook/')
+
+	bookcopies = BookCopy.objects.filter(book=book)
+	duedate_lst = []
+	request_lst = []
+	status_lst = []
+	for copy in bookcopies:
+		borrows = BorrowInfo.objects.filter(bookcopy=copy)
+		reservations = Reservation.objects.filter(bookcopy=copy)
+		request_lst.append(len(reservations))
+		BORROW = False
+		for borrow in borrows:
+			if not borrow.ReturnDate:
+				BORROW = True
+				duedate_lst.append(borrow.BorrowDate+borrowPeriod)
+				if borrow.user.user.username == user.user.username:
+					status_lst.append('my_borrow')
+				else:
+					RESERVED = False
+					for res in reservations:
+						if res.user.user.username == user.user.username:
+							RESERVED = True
+							status_lst.append('my_reserved')
+							break
+					if not RESERVED:
+						status_lst.append('others_borrow')
+				break
+
+		if not BORROW:
+			duedate_lst.append("")
+			if not reservations:
+				status_lst.append('onboard')
+			else:
+				status_lst.append('others_reserved')
+
+	copy_due_req_status = zip(bookcopies,duedate_lst,request_lst,status_lst)
+	content = {'user':user,'active_menu':'viewbook','book':book,'copy_due_req_status':copy_due_req_status}
+	return render_to_response('viewcopies.html',content,context_instance=RequestContext(req))
+
+
+def addreservation(req):
+	username = req.session.get('username', '')
+	if username != '':
+		user = Student.objects.get(user__username=username)
+	else:
+		user = ''
+	id = req.GET.get('id','')
+	if id == '':
+		print id
+		return HttpResponseRedirect('/viewbook/')
+	try:
+		bookcopy = BookCopy.objects.get(id=id)
+	except:
+		return HttpResponseRedirect('/viewbook/')
+
+	resDate = datetime.date.today()
+	if req.POST:
+		post = req.POST
+		loc = post.get('loc','')
+		dueDate = post.get('duedate','')
+		reservation = Reservation(resDate=resDate,dueDate=dueDate,bookcopy=bookcopy,user=user,status=u'处理中',loc=loc)
+		reservation.save()
+		return HttpResponseRedirect('/viewcopies/?isbn=bookcopy.book.isbn')
+
+	content =  {'user':user,'active_menu':'viewbook','bookcopy':bookcopy,'resDate':resDate}
+	return render_to_response('addreservation.html',content,context_instance=RequestContext(req))
 
 
 def frate(x):
 	return {
-		'ex': 5,
-		'go': 4,
-		'av': 3,
-		'fa': 2,
-		'po': 1,
+		'excellent': 5,
+		'good': 4,
+		'average': 3,
+		'fair': 2,
+		'poor': 1,
 	}.get(x, 5)
 
 
@@ -185,7 +298,6 @@ def detail(req):
 	else:
 		user = ''
 	isbn = req.GET.get('isbn','')
-	print isbn
 	if isbn == '':
 		return HttpResponseRedirect('/viewbook/')
 	try:
@@ -275,28 +387,41 @@ def reservation(req):
 
 
 def borrow(req):
-    username = req.session.get('username', '')
-    if username != '':
-        user = Student.objects.get(user__username=username)
-    else:
-        user = ''
-    borrow_info = BorrowInfo.objects.filter(user=user,ReturnDate=None)
-    Due_list = []
-    Fine = []
-    for borrow in borrow_info:
-        book = borrow.book
-        Due_list.append(borrow.BorrowDate + book.borrowPeriod)
-        if (borrow.BorrowDate + book.borrowPeriod) < datetime.date:
-            d = (datetime.date.today() - (borrow.BorrowDate + book.borrowPeriod)).days
-            Fine.append(d*0.1)
-            user.permission = 0
-            user.save()
-        else:
-            Fine.append(0)
-    zipl = zip(borrow_info, Due_list, Fine)
-    now = datetime.datetime.now()
-    content = {'user': user, 'active_menu': 'myaccount', 'borrow_info': borrow_info, 'Due_list': Due_list, 'zipl': zipl, 'now': now}
-    return render_to_response("borrow.html",content, context_instance=RequestContext(req))
+	username = req.session.get('username', '')
+	if username != '':
+		user = Student.objects.get(user__username=username)
+	else:
+		user = ''
+	id = req.GET.get('id','')
+	if id:
+		try:
+			bookcopy = BookCopy.objects.get(id=id)
+			book = Book.objects.get(isbn=bookcopy.book.isbn)
+			borrowinfo = BorrowInfo.objects.get(bookcopy=bookcopy,user=user,ReturnDate=None)
+			borrowinfo.ReturnDate = datetime.date.today()
+			borrowinfo.save()
+			bookcopy.status = 'available'
+			bookcopy.save()
+			book.borrowed_num -= 1
+			book.save()
+		except:
+			return HttpResponseRedirect('/myaccount/')
+	borrow_info = BorrowInfo.objects.filter(user=user,ReturnDate=None)
+	Due_list = []
+	Fine = []
+	for borrow in borrow_info:
+		Due_list.append(borrow.BorrowDate + borrowPeriod)
+		if (borrow.BorrowDate + borrowPeriod) < datetime.date.today():
+			d = (datetime.date.today() - (borrow.BorrowDate + borrowPeriod)).days
+			Fine.append(d*0.1)
+			user.permission = 0
+			user.save()
+		else:
+			Fine.append(0)
+	zipl = zip(borrow_info, Due_list, Fine)
+	now = datetime.datetime.now()
+	content = {'user': user, 'active_menu': 'myaccount', 'borrow_info': borrow_info, 'Due_list': Due_list, 'zipl': zipl, 'now': now}
+	return render_to_response("borrow.html",content, context_instance=RequestContext(req))
 
 
 def borrowhistory(req):
@@ -308,12 +433,12 @@ def borrowhistory(req):
     borrow_info = BorrowInfo.objects.filter(user=user)
     Due_list = []
     Fine = []
+    borrowPeriod = datetime.timedelta(days=30)
     for borrow in borrow_info:
         if borrow.ReturnDate:
-            book = borrow.book
-            Due_list.append(borrow.BorrowDate + book.borrowPeriod)
-            if borrow.BorrowDate + book.borrowPeriod < borrow.ReturnDate:
-                d = (borrow.ReturnDate - (borrow.BorrowDate + book.borrowPeriod)).days
+            Due_list.append(borrow.BorrowDate + borrowPeriod)
+            if borrow.BorrowDate + borrowPeriod < borrow.ReturnDate:
+                d = (borrow.ReturnDate - (borrow.BorrowDate + borrowPeriod)).days
                 Fine.append(d*0.1)
                 user.permission = 0
                 user.save()

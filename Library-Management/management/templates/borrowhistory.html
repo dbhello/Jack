@@ -25,7 +25,7 @@
                     {% for bi, dl, fi in zipl %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
-                        <td><a href="/viewbook/detail/?isbn={{bi.book.isbn}}">{{ bi.book.name }}</a></td>
+                        <td><a href="/viewbook/detail/?isbn={{bi.bookcopy.book.isbn}}">{{ bi.bookcopy.book.name }}</a></td>
                         <td>{{ bi.BorrowDate|date:"Y-m-d" }}</td>
                         <td>{{ bi.ReturnDate|date:"Y-m-d" }}</td>
                         <td>{{ dl|date:"Y-m-d" }}</td>

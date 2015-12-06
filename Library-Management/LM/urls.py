@@ -23,5 +23,7 @@ urlpatterns = patterns('',
     url(r'^reservation/$',views.reservation),
     url(r'^borrowhistory/$',views.borrowhistory),
     url(r'^borrow/$',views.borrow),
+    url(r'^viewcopies/$',views.viewcopies),
+    url(r'^addreservation/$',views.addreservation),
     url(r'^image/(?P<path>.*)$', 'django.views.static.serve', {'document_root': settings.MEDIA_PATH}),
 )

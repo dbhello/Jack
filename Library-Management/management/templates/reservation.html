@@ -24,14 +24,14 @@
                     {% for res in reservation_info %}
                     <tr>
                         <td>{{ forloop.counter }}</td>
-                        <td><a href="/viewbook/detail/?isbn={{res.book.isbn}}">{{ res.book.name }}</a></td>
-                        <td>{{ res.resDate }}</td>
-                        <td>{{ res.resDate }}</td>
+                        <td><a href="/viewbook/detail/?isbn={{res.bookcopy.book.isbn}}">{{ res.bookcopy.book.name }}</a></td>
+                        <td>{{ res.resDate|date:"Y-m-d" }}</td>
+                        <td>{{ res.resDate|date:"Y-m-d" }}</td>
                         <td>{{ res.status }}</td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td>没有借阅记录</td>
+                        <td>没有预约请求</td>
                     </tr>
                     {% endfor %}
                 </tbody>
