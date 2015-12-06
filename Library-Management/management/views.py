@@ -191,15 +191,20 @@ def viewcopies(req):
 		if isbn == '':
 			return HttpResponseRedirect('/viewbook/')
 		try:
+			if not user:
+				return HttpResponseRedirect('/login/')
 			book = Book.objects.get(isbn=isbn)
 		except:
 			return HttpResponseRedirect('/viewbook/')
 	else:
 		try:
+			if not user:
+				return HttpResponseRedirect('/login/')
 			bookcopy = BookCopy.objects.get(id=id)
 			book = Book.objects.get(isbn=bookcopy.book.isbn)
 			if bookcopy.status == 'available':
 				bookcopy.status = 'borrowed'
+				bookcopy.save()
 				borrowinfo = BorrowInfo(bookcopy=bookcopy,user=user,BorrowDate=datetime.date.today())
 				borrowinfo.save()
 				book.borrowed_num += 1
@@ -312,6 +317,7 @@ def detail(req):
 		eval = BookEval(book=book,user=user,evalDate=now,evalDesc=comment,rate='ex')
 		eval.save()
 
+	authors = book.author.all()
 	img_list = Img.objects.filter(book=book)
 	book_eval = BookEval.objects.filter(book=book)
 	rate_sum = 0
@@ -324,7 +330,7 @@ def detail(req):
 		rate=rate_sum/rate_count
 	rate_loop=['x']*rate
 	rate_loop_empty=['x']*(5-rate)
-	content = {'user': user, 'active_menu': 'viewbook', 'book': book,'book_eval':book_eval,'img_list': img_list, 'rate_loop': rate_loop, 'rate_loop_empty': rate_loop_empty}
+	content = {'user': user, 'active_menu': 'viewbook','authors':authors, 'book': book,'book_eval':book_eval,'img_list': img_list, 'rate_loop': rate_loop, 'rate_loop_empty': rate_loop_empty}
 	return render_to_response('detail.html', content, context_instance=RequestContext(req))
 
 def myaccount(req):
@@ -333,6 +339,7 @@ def myaccount(req):
         user = Student.objects.get(user__username=username)
     else:
         user = ''
+        return HttpResponseRedirect('/index/')
     borrow_num = len(BorrowInfo.objects.filter(user=user,ReturnDate=None))
     borrowhistory_num = len(BorrowInfo.objects.filter(user=user))-borrow_num
     reservation_num = len(Reservation.objects.filter(user=user))
@@ -355,24 +362,26 @@ def viewmember(req):
     return render_to_response('viewmember.html', content, context_instance=RequestContext(req))
 
 def midifybaseinfo(req):
-    username = req.session.get('username', '')
-    if username != '':
-        user = Student.objects.get(user__username=username)
-    else:
-        user = ''
-    status = ''
-    if req.POST:
-        print "post"
-        post = req.POST
-        user.nickname = post.get('nickname','')
-        user.phone = post.get('phone','')
-        user.address = post.get('address','')
-        user.user.email = post.get('email','')
-        user.save()
-        status = "success"
-        return HttpResponseRedirect('/myaccount/')
-    content = {'user':user,'active_menu':'myaccount','status':status}
-    return render_to_response("modifybaseinfo.html",content, context_instance=RequestContext(req))
+	username = req.session.get('username', '')
+	if username != '':
+		user = Student.objects.get(user__username=username)
+	else:
+		user = ''
+	status = ''
+	if req.POST:
+		post = req.POST
+		user.name = post.get('name','')
+		user.phone = post.get('phone','')
+		user.address = post.get('address','')
+		user.user.email = post.get('email','')
+		user.major = post.get('major','')
+		user.academy = post.get('academy','')
+		user.politics = post.get('politics','')
+		user.save()
+		status = "success"
+		return HttpResponseRedirect('/myaccount/')
+	content = {'user':user,'active_menu':'myaccount','status':status}
+	return render_to_response("modifybaseinfo.html",content, context_instance=RequestContext(req))
 
 
 def reservation(req):

@@ -15,7 +15,7 @@
 							<li data-target="#carousel-generic" data-slide-to="{{forloop.counter0}}" {% if forloop.first %}class="active"{% endif %}></li>
 						{% endfor %}
 						</ol>
-						<div class="carousel-inner" role="listbox">
+						<div class="carousel-inner " role="listbox">
 						{% for img in img_list %}
 							<div {% if forloop.first %}class="item active"{%else%}class="item"{% endif %}>
 								<img class="img-rounded" src="/{{img.img}}">
@@ -35,37 +35,36 @@
 			</div>
 			<div class="col-md-6 col-md-offset-1">
 				<h3 align='center'>{{book.name}}</h3>
-                <h4 align='right'>By {{book.author}}</h4>
+                <h4 align='right'>By
+                    {% for author in authors %}
+                    {{ author.name}}
+                    {% endfor %}
+                </h4>
                 <h4>ISBN：{{ book.isbn }}</h4>
                 <h4>出版时间：{{book.pubDate|date:"Y-m-d"}} </h4>
-                <h4>出版社：{{ book.publisher }}</h4>
+                <h4>出版社：{{ book.publisher }}
+                </h4>
                 <h4>图书类型：{{ book.typ }}</h4>
-				<h4>Price：{{ book.price|floatformat:2 }}</h4>
+				<h4>索书号：{{ book.call_number }}</h4>
+                <h4>评级：
                 {% for i in rate_loop %}
                     <span class="glyphicon glyphicon-star" aria-hidden="true"></span>
                 {% endfor %}
                 {% for i in rate_loop_empty %}
                     <span class="glyphicon glyphicon-star-empty" aria-hidden="true"></span>
                 {% endfor %}
+                </h4>
+                <h4>详情：
+                     {% if book.desc %}
+                        {{book.desc}}
+                    {% else %}
+                         暂无描述
+                    {% endif %}
+                </h4>
                 <br>
-                <br>
-                <p><a class="btn btn-primary" href="#" role="button">预约 &raquo;</a></p>
+                <h4><a class="btn" href="/viewcopies/?isbn={{book.isbn}}" role="button">点击查看所有单册借阅情况 &raquo;</a></h4>
             </div>
 		</div>
-        <div class="col-md-9 col-md-offset-1 book_container">
-            <h3 id="left">详情</h3>
-        </div>
-        {% if book.desc %}
-        <div class="col-md-9 col-md-offset-1">
-            <p> {{book.desc}}</p>
-        </div>
-        {% else %}
-        <div class="col-md-9 col-md-offset-1">
-            <p>暂无描述</p>
-        </div>
-        {% endif %}
-
-
         <div class="col-md-9 col-md-offset-1 book_container">
             <h3 id="left">评论</h3>
         </div>
@@ -79,7 +78,6 @@
             <p>暂无评价</p>
         </div>
         {% endfor %}
-
         <div class="col-md-9 col-md-offset-1">
             <h3 class="headline">添加评论</h3>
             <form role="form" method="post" name="comment_form">

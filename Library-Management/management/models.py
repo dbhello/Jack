@@ -104,7 +104,8 @@ class Reservation(models.Model):
     user = models.ForeignKey(Student)
     resDate = models.DateField()
     dueDate = models.DateField()
-    status = models.CharField(max_length=40)
+    STATUS_CHOICE = ((u"满足",u"满足"),(u"处理中",u"处理中"))
+    status = models.CharField(max_length=40,choices=STATUS_CHOICE,default=u"处理中")
     LOC_CHOICE = ((u'东校区流通',u'东校区流通'),(u'北校区流通',u'北校区流通'),(u'南校区流通',u'南校区流通'))
     loc = models.CharField(max_length=30,choices=LOC_CHOICE,default='east')
     def __unicode__(self):
