@@ -59,23 +59,23 @@ WSGI_APPLICATION = 'LM.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/1.7/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.sqlite3',
-#         'NAME': os.path.join(BASE_DIR, 'management.db'),
-#     }
-# }
-
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'mysql',
-        'HOST':'',
-        'PORT':'',
-        'USER':'root',
-        'PASSWORD':'hello123',
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': os.path.join(BASE_DIR, 'management.db'),
     }
 }
+
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.mysql',
+#         'NAME': 'mysql',
+#         'HOST':'',
+#         'PORT':'',
+#         'USER':'root',
+#         'PASSWORD':'hello123',
+#     }
+# }
 
 
 # Internationalization
