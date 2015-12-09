@@ -159,8 +159,7 @@ def viewbook(req):
 
 	img_lst = []
 	for book in book_lst:
-		img = Img.objects.filter(book=book)
-		img_lst.append(img[0])
+		img_lst.append(book.img)
 
 	paginator = Paginator(book_lst, 5)
 	img_paginator = Paginator(img_lst, 5)
